@@ -1,0 +1,419 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SPD Langenselbold – Jubiläums‑Quiz</title>
+  <style>
+    :root{
+      --spd-red:#E3000F; /* SPD-Rot */
+      --ink:#131516;
+      --bg:#fbfbfb;
+      --muted:#6b7280;
+      --ok:#1b9e4b;
+      --bad:#b00020;
+      --card:#ffffff;
+      --border:#e5e7eb;
+      --radius:18px;
+      --shadow:0 8px 24px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif}
+    .wrap{max-width:980px;margin:24px auto;padding:24px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+    header img.logo{height:54px;width:auto;border-radius:6px}
+    header .title{display:flex;flex-direction:column}
+    header h1{font-size:clamp(1.4rem,2.5vw,2rem);line-height:1.15;margin:0}
+    header p{margin:4px 0 0;color:var(--muted)}
+
+    .scoreboard{margin-left:auto;display:flex;align-items:center;gap:8px;font-weight:700}
+    .score-dot{width:10px;height:10px;border-radius:999px;background:var(--spd-red)}
+
+    /* Roter Rahmen um das Quiz */
+    .quiz-frame{background:var(--spd-red);border-radius:24px;padding:20px;box-shadow:var(--shadow)}
+    .quiz-title{color:#fff;text-align:center;margin:0 0 12px;letter-spacing:.3px}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .card-head{padding:18px 18px 0}
+    .progress{height:8px;background:#f3f4f6;border-radius:99px;overflow:hidden;margin:12px 18px}
+    .bar{height:100%;width:0;background:var(--spd-red);transition:width .35s ease}
+    .card-body{padding:18px}
+
+    .intro{display:grid;gap:16px;align-items:start}
+    .intro ul{margin:0 0 0 18px;color:var(--muted)}
+
+    .question{font-size:1.2rem;margin:0 0 12px}
+
+    .answers{display:grid;gap:12px}
+    .answer{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid var(--border);border-radius:14px;background:#fff;cursor:pointer;transition:transform .05s ease, border-color .2s ease}
+    .answer:focus-within{outline:2px solid var(--spd-red);outline-offset:2px}
+    .answer:hover{transform:translateY(-1px)}
+    .answer input{margin-top:3px}
+    .answer.correct{border-color:var(--ok);background:#f1fbf5}
+    .answer.wrong{border-color:var(--bad);background:#fff5f6}
+
+    .explanations{margin-top:10px;padding:12px;border:1px dashed var(--border);border-radius:12px;background:#fcfcfe}
+    .explanations h4{margin:0 0 8px;font-size:1rem;color:var(--muted)}
+
+    .controls{display:flex;justify-content:space-between;gap:12px;margin-top:16px}
+    .btn{appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:600;cursor:pointer}
+    .btn-primary{background:var(--spd-red);color:#fff}
+    .btn-ghost{background:#fff;border:1px solid var(--border)}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    .result{display:grid;gap:12px;text-align:center;padding:28px}
+    .badge{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:8px 14px;margin:0 auto;color:var(--muted)}
+    .score{font-size:clamp(1.6rem,3.8vw,2.2rem);margin:0}
+
+    .share{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:6px}
+    .footer{margin-top:16px;color:var(--muted);font-size:.95rem;text-align:center}
+
+    canvas#sharecard{display:block;margin:10px auto;border:1px solid var(--border);border-radius:12px;max-width:100%;height:auto}
+
+    @media (max-width:640px){
+      .wrap{padding:16px}
+    }
+
+    @media print{
+      header, .controls, .share{display:none}
+      .card{box-shadow:none;border:0}
+      body{background:#fff}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img class="logo" src="assets/images/logo.png" alt="SPD Langenselbold Logo"/>
+      <div class="title" style="flex:1 1 auto">
+        <h1>Jubiläums‑Quiz: SPD Langenselbold</h1>
+        <p>Zum <strong>135‑jährigen Jubiläum</strong> (1890–2025) – 20 Fragen mit Geschichte, Witz und Aha‑Momenten.</p>
+      </div>
+      <div class="scoreboard" aria-live="polite" title="Aktueller Punktestand">
+        <span class="score-dot" aria-hidden="true"></span>
+        <span id="liveScore">0 / 20</span>
+      </div>
+    </header>
+
+    <div class="quiz-frame">
+      <h2 class="quiz-title">135 Jahre SPD – Das Quiz</h2>
+      <main class="card" id="app" role="application" aria-live="polite"></main>
+    </div>
+
+    <p class="footer">Veröffentlicht anlässlich des 135‑jährigen Jubiläums des SPD‑Ortsvereins Langenselbold.</p>
+  </div>
+
+  <canvas id="sharecard" width="1200" height="630" style="display:none"></canvas>
+
+  <script>
+    // ======= Fragen (20) – mit Erklärungen pro Antwort =======
+    const QUESTIONS = [
+      { id:1, text:"Wann wurde in Langenselbold der erste Arbeiterverein gegründet?",
+        answers:[
+          {text:"1848",correct:false,explain:"Revolutionsjahr – in Langenselbold formierte sich der Verein später."},
+          {text:"1887",correct:true, explain:"1887 gründeten Arbeiter den ersten Verein; darauf baut die spätere SPD‑Organisation auf."},
+          {text:"1903",correct:false,explain:"Da war der Verein längst aktiv."},
+          {text:"1971",correct:false,explain:"Zu spät – da diskutierte man andere Dinge."}
+        ]},
+      { id:2, text:"Warum konnte SPD‑Kandidat Carl Ulrich 1887 keinen Wahlkampf führen?",
+        answers:[
+          {text:"Er war auf Weltreise",correct:false,explain:"Hübsch, aber ausgedacht."},
+          {text:"Er saß wegen Geheimbündelei im Gefängnis.",correct:true, explain:"Ulrich wurde 1887 verurteilt – Beispiel früher Repression gegen Sozialdemokraten."},
+          {text:"Undercover als Bismarcks Gärtner",correct:false,explain:"Klingt nach Komödie."},
+          {text:"Er existierte gar nicht",correct:false,explain:"Doch – er wurde später hessischer Ministerpräsident."}
+        ]},
+      { id:3, text:"Wo sprach der Hanauer Abgeordnete Frohme bei der SPD‑Gründung in Langenselbold?",
+        answers:[
+          {text:"Auf dem Marktplatz",correct:false,explain:"Kein Open‑Air – siehe Chronik."},
+          {text:"Im Honky‑Tonk",correct:false,explain:"Kam erst Jahrzehnte später."},
+          {text:"Aus dem Fenster des Brauhauses",correct:true, explain:"Historischer Bericht: Rede aus dem Fenster vor ~200 Menschen."},
+          {text:"Vom Schlossturm",correct:false,explain:"Romantisch, aber falsch."}
+        ]},
+      { id:4, text:"Woraus bestand die Mitgliederbasis der SPD Langenselbold in den Anfangsjahren?",
+        answers:[
+          {text:"Pferdehändler:innen",correct:false,explain:"Andere Zunft."},
+          {text:"Adelige",correct:false,explain:"Eher nicht."},
+          {text:"Bauarbeiter:innen",correct:true, explain:"Vor allem Bauhandwerker und Pflasterer – sehr bodenständig."},
+          {text:"Punkrocker:innen",correct:false,explain:"Die kamen später."}
+        ]},
+      { id:5, text:"Wie nannte man spöttisch den ersten bekannten Sozialdemokraten vor Ort?",
+        answers:[
+          {text:"Der linke Trompeter",correct:false,explain:"Klingt musikalisch, ist aber erfunden."},
+          {text:"Der rote Wirt",correct:false,explain:"War ein Schuster, kein Wirt."},
+          {text:"Der Schuster von der Roten Hohl",correct:true, explain:"Spottgedicht über den Schuster Droith in der Roten Hohl – frühe lokale Ikone."},
+          {text:"Das Selbolder Genösschen",correct:false,explain:"Niedlich, aber nicht überliefert."}
+        ]},
+      { id:6, text:"Warum war es mutig, SPD‑Versammlungen im Isenburger Hof abzuhalten?",
+        answers:[
+          {text:"Wegen der Preise",correct:false,explain:"Nicht der Preis, die Polizei war das Problem."},
+          {text:"Wegen der Polizei",correct:true, explain:"Wirte wurden drangsaliert, wenn sie Sozialdemokraten Räume gaben – Wirt Ebert zeigte Haltung."},
+          {text:"Dort galt Bierverbot",correct:false,explain:"Unwahrscheinlich in Langenselbold."},
+          {text:"Nur Adelige verkehrten dort",correct:false,explain:"Kein SPD‑Hotspot."}
+        ]},
+      { id:7, text:"Wann fiel das Sozialistengesetz?",
+        answers:[
+          {text:"2015",correct:false,explain:"Falsches Jahrhundert."},
+          {text:"1901",correct:false,explain:"Schon vorbei."},
+          {text:"1918",correct:false,explain:"Da fiel das Kaiserreich."},
+          {text:"1890",correct:true, explain:"1890 endete das Gesetz – die Parteiarbeit konnte neu aufblühen."}
+        ]},
+      { id:8, text:"Wer wurde 1945 zum kommissarischen Bürgermeister ernannt?",
+        answers:[
+          {text:"Wilhelm Betz",correct:false,explain:"Aktiv, aber nicht Bürgermeister."},
+          {text:"Jean Mahr",correct:true, explain:"Jean Mahr übernahm 1945 die Amtsführung – prägend für den Wiederaufbau."},
+          {text:"Hans‑Joachim Kulenkampff",correct:false,explain:"Fernsehikone, kein Bürgermeister."},
+          {text:"Uschi Glas",correct:false,explain:"Komplett anderes Genre."}
+        ]},
+      { id:9, text:"Wie viele Gummibäume erhielt die SPD 1965 zum 75. Jubiläum?",
+        answers:[
+          {text:"1",correct:false,explain:"Es waren mehr."},
+          {text:"5",correct:false,explain:"So grün war die Lieferung nicht."},
+          {text:"2",correct:true, explain:"Zwei Gummibäume – charmantes, gut gegossenes Geschenk."},
+          {text:"0",correct:false,explain:"Doch, es gab welche!"}
+        ]},
+      { id:10, text:"Was wurde 1975 gegen heftigen Widerstand beschlossen?",
+        answers:[
+          {text:"Einführung von Parkgebühren",correct:false,explain:"Nicht der Aufreger des Jahres."},
+          {text:"Gartenzwergverbot",correct:false,explain:"Zum Glück nicht."},
+          {text:"Ankauf des Schlossareals",correct:true, explain:"1975 beschlossen, 1976 gekauft – späterer Kulturanker."},
+          {text:"Abschaffung des Freibads",correct:false,explain:"Nein."}
+        ]},
+      { id:11, text:"Welches Großprojekt setzte die SPD durch?",
+        answers:[
+          {text:"Kinzigsee",correct:true, explain:"Freizeitgelände Kinzigsee – erst umstritten, dann beliebt."},
+          {text:"Mondlandung",correct:false,explain:"NASA, nicht Selbold."},
+          {text:"Rechtsverkehr in Selbold",correct:false,explain:"Schon länger Standard."},
+          {text:"Nutria‑Ansiedlung",correct:false,explain:"Tierisch ausgedacht."}
+        ]},
+      { id:12, text:"Wann wurde Langenselbold zur Stadt erhoben?",
+        answers:[
+          {text:"1960",correct:false,explain:"Noch Gemeinde."},
+          {text:"1975",correct:false,explain:"Schlosskauf ja, Stadtrecht nein."},
+          {text:"1983",correct:true, explain:"1983 – aus Anlass der 900‑Jahr‑Feier."},
+          {text:"2005",correct:false,explain:"Da war man längst Stadt."}
+        ]},
+      { id:13, text:"Welche zwei fast gleichnamigen Genossen gab es?",
+        answers:[
+          {text:"W. Ebner & W. Ebner",correct:true, explain:"Tatsächlich doppelt vorhanden – sorgte für Verwechslungen."},
+          {text:"R. Sahler & R. Sahler",correct:false, explain:"Klingt plausibel, ist hier aber nicht korrekt."},
+          {text:"B. Trug & B. Trug",correct:false, explain:"Nicht belegt."},
+          {text:"L. Schulz & L. Schultz",correct:false, explain:"Auch nicht."}
+        ]},
+      { id:14, text:"Wer sagte fürs 75. Jubiläum ab – später Bundeskanzler?",
+        answers:[
+          {text:"Olaf Scholz",correct:false,explain:"Anderes Jahrhundert."},
+          {text:"Willy Brandt",correct:false,explain:"Prominenter SPD‑Kanzler – hier aber nicht der Absager."},
+          {text:"Helmut Schmidt",correct:true, explain:"Helmut Schmidt musste absagen – später Bundeskanzler."},
+          {text:"Angela Merkel",correct:false,explain:"Andere Partei, anderer Zeitrahmen."}
+        ]},
+      { id:15, text:"1952 ließ die Stadt ein Haus mit sechs Wohnungen in der Kinzigstraße errichten. Für wie viel DM?",
+        answers:[
+          {text:"825,00",correct:false,explain:"Viel zu wenig."},
+          {text:"8.250,00",correct:false,explain:"Auch zu niedrig."},
+          {text:"82.500,00",correct:true, explain:"82.500 DM – beachtlich für die Nachkriegsjahre."},
+          {text:"825.000,00",correct:false,explain:"Das wäre Luxus gewesen."}
+        ]},
+      { id:16, text:"Was war Bürgermeister Jean Mahr von Beruf?",
+        answers:[
+          {text:"Influencer",correct:false,explain:"Hätte Stein‑Follower gehabt."},
+          {text:"Schlosser",correct:false,explain:"Knapp daneben."},
+          {text:"Konditor",correct:false,explain:"Süß, aber falsch."},
+          {text:"Pflasterer",correct:true, explain:"Mahr war Pflasterer – im besten Sinne bodenständig."}
+        ]},
+      { id:17, text:"Was hatte die SPD 1985?",
+        answers:[
+          {text:"Schulterpolster",correct:false,explain:"Mode, kein Mandat."},
+          {text:"Absolute Mehrheit im Stadtparlament",correct:true, explain:"1985 errang die SPD die absolute Mehrheit."},
+          {text:"Alle Wham‑Alben",correct:false,explain:"Privatsache."},
+          {text:"Dauerwelle",correct:false,explain:"Vielleicht, aber nicht politisch."}
+        ]},
+      { id:18, text:"Wann trat Bürgermeister Jean Mahr zurück?",
+        answers:[
+          {text:"1960",correct:true, explain:"1960 – nach 15 Jahren, aus gesundheitlichen Gründen."},
+          {text:"1955",correct:false,explain:"Da amtierte er noch."},
+          {text:"1972",correct:false,explain:"Zu spät."},
+          {text:"1945",correct:false,explain:"Da begann seine Amtszeit."}
+        ]},
+      { id:19, text:"Was entstand 1961–1963 in der Niedertalstraße?",
+        answers:[
+          {text:"Reihenhäuser mit 52 Wohnungen",correct:true, explain:"Für Familien aus Baracken – wichtiger Sozialbauschritt."},
+          {text:"Ein Flughafen",correct:false,explain:"Nein."},
+          {text:"Ein Vergnügungspark",correct:false,explain:"Auch nein."},
+          {text:"Ein Truppenübungsplatz",correct:false,explain:"Fantasie."}
+        ]},
+      { id:20, text:"Was wurde 1979 eingerichtet?",
+        answers:[
+          {text:"Schlossbücherei",correct:true, explain:"1979 startete die Schlossbücherei – Kultur fürs Städtchen."},
+          {text:"Autokino",correct:false,explain:"Nicht hier."},
+          {text:"Großaquarium",correct:false,explain:"Nur am Kinzigsee – in Gedanken."},
+          {text:"Saunaclub",correct:false,explain:"Nope."}
+        ]}
+    ];
+
+    // ======= Konfiguration =======
+    const CONFIG = { randomizeQuestions:true, randomizeAnswers:true };
+
+    // ======= Helpers =======
+    const $ = (s,el=document)=>el.querySelector(s);
+    const shuffle = arr => arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
+    const app = document.getElementById('app');
+
+    // ======= State =======
+    let state = { index:-1, score:0, answered:false, picked:null, order: [] };
+
+    // ======= Render =======
+    function render(){
+      $('#liveScore').textContent = `${state.score} / ${QUESTIONS.length}`;
+      if(state.index===-1){ app.innerHTML = renderIntro(); return; }
+      if(state.index>=state.order.length){ app.innerHTML = renderResult(); setTimeout(()=>drawShareCard(state.score, state.order.length), 60); return; }
+      const q = state.order[state.index];
+      app.innerHTML = `
+        <div class="card-head">
+          <div class="progress" aria-hidden="true"><div class="bar" style="width:${((state.index)/state.order.length*100).toFixed(1)}%"></div></div>
+        </div>
+        <div class="card-body">
+          <p class="question"><strong>Frage ${state.index+1} von ${state.order.length}:</strong> ${q.text}</p>
+          <form class="answers" onsubmit="return false;">
+            ${renderAnswers(q)}
+          </form>
+          ${state.answered ? renderPickedExplanation(q) : ''}
+          <div class="controls">
+            <button class="btn btn-ghost" onclick="restart()">Neu starten</button>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" onclick="skip()" ${state.answered? 'disabled':''}>Überspringen</button>
+              <button class="btn btn-primary" onclick="next()" ${!state.answered? 'disabled':''}>Weiter</button>
+            </div>
+          </div>
+        </div>`;
+      setTimeout(()=>{ const bar=$('.bar'); if(bar) bar.style.width = `${((state.index+(state.answered?1:0))/state.order.length*100).toFixed(1)}%`; }, 50);
+    }
+
+    function renderIntro(){
+      return `
+        <div class="card-body intro">
+          <h2 style="margin:0">Willkommen zum Jubiläums‑Quiz!</h2>
+          <p>Der SPD‑Ortsverein Langenselbold wird <strong>135 Jahre</strong>. Wir feiern Geschichte, Projekte und Menschen – spielerisch, mit Sofort‑Feedback, Live‑Score und Konfetti.</p>
+          <ul>
+            <li>20 Fragen • jeweils <em>eine</em> richtige Antwort</li>
+            <li>Kurze Erklärung zu deiner Auswahl</li>
+            <li>Am Ende: Social‑Kachel als PNG</li>
+          </ul>
+          <div class="controls"><span></span><button class="btn btn-primary" onclick="start()">Quiz starten</button></div>
+        </div>`
+    }
+
+    function renderAnswers(q){
+      const answers = CONFIG.randomizeAnswers ? shuffle([...q.answers]) : q.answers;
+      return answers.map((a,i)=>{
+        const id = `q${q.id}-a${i}`;
+        let cls = 'answer';
+        if(state.answered){ if(a.correct) cls+=' correct'; else if(state.picked && state.picked.text===a.text) cls+=' wrong'; }
+        return `<label class="${cls}" for="${id}">
+          <input type="radio" id="${id}" name="q${q.id}" value="${escapeHtml(a.text)}" ${state.answered?'disabled':''}
+                 onchange="pickAnswer(${q.id}, '${escapeHtml(a.text)}', ${a.correct})"/>
+          <span>${a.text}</span>
+        </label>`;
+      }).join('');
+    }
+
+    function renderPickedExplanation(q){
+      const picked = q.answers.find(a=> a.text===state.picked?.text);
+      if(!picked) return '';
+      return `<div class="explanations" aria-live="polite"><h4>Kurze Erklärung</h4><p><strong>${picked.text}:</strong> ${picked.explain}</p></div>`
+    }
+
+    // ======= Actions =======
+    function start(){
+      state.index=0; state.score=0; state.answered=false; state.picked=null; confetti(0);
+      state.order = CONFIG.randomizeQuestions ? shuffle([...QUESTIONS]) : [...QUESTIONS];
+      render();
+    }
+    function restart(){ state.index=-1; state.score=0; state.answered=false; state.picked=null; confetti(0); render(); }
+    function skip(){ if(state.answered) return; state.index++; state.picked=null; state.answered=false; render(); }
+    function next(){ if(!state.answered) return; state.index++; state.picked=null; state.answered=false; render(); }
+    function pickAnswer(qid,text,correct){ if(state.answered) return; state.answered=true; state.picked={text,correct}; if(correct){state.score++; confetti(10);} render(); setTimeout(()=>{const b=document.querySelector('.btn.btn-primary'); if(b) b.focus();},60); }
+
+    // ======= Ergebnis & Teilen =======
+    function renderResult(){
+      const total = state.order.length; const pct = Math.round(state.score/total*100);
+      const tier = pct>=90? 'Urgestein' : pct>=71? 'Roter Kenner' : pct>=51? 'Ortskundige:r' : pct>=31? 'Neugieriger Nachbar' : 'Zugezogener';
+      const tierText = {
+        'Urgestein': 'SPD im Blut, Kinzig im Herzen. Du warst vermutlich schon dabei, als die ersten Gummibäume überreicht wurden.',
+        'Roter Kenner': 'Ein echter Kenner der Selbolder SPD – du könntest fast im Geschichtskreis mitmischen.',
+        'Ortskundige:r': 'Nicht schlecht! Du kennst die wichtigsten Ecken – und weißt, dass Niedertalstraße kein Getränk ist.',
+        'Neugieriger Nachbar': 'Du schaust schon mal über den Gartenzaun und hast gehört, dass hier irgendwas mit Sozialdemokratie los ist.',
+        'Zugezogener': 'Willkommen in Langenselbold! Du kennst uns noch nicht so gut – aber das lässt sich ändern. Der nächste SPD‑Stammtisch hilft.'
+      }[tier];
+      if(pct>=90) confetti(80);
+      return `<div class="card-body result">
+        <div class="badge">🥳 Auswertung</div>
+        <p class="score"><strong>${state.score}</strong> von ${total} richtig – ${pct}% (${tier})</p>
+        <p>${tierText}</p>
+        <p>Teile dein Ergebnis als Bildkachel oder starte eine neue Runde.</p>
+        <div class="share">
+          <button class="btn btn-ghost" onclick="shareScore(${pct})">Link teilen</button>
+          <button class="btn btn-primary" onclick="downloadCard()">Kachel herunterladen (PNG)</button>
+          <button class="btn btn-ghost" onclick="start()">Nochmal spielen</button>
+          <button class="btn btn-ghost" onclick="window.print()">Drucken</button>
+        </div>
+      </div>`
+    }
+
+    async function shareScore(pct){
+      const text = `Ich habe im SPD‑Langenselbold‑Quiz ${pct}% erreicht!`;
+      const url = location.href.split('#')[0];
+      if(navigator.share){ try{ await navigator.share({title:document.title, text, url}); }catch(e){} }
+      else { try{ await navigator.clipboard.writeText(`${text} ${url}`); alert('Link kopiert!'); } catch(e){ prompt('Kopiere diesen Link:', url); } }
+    }
+
+    // ======= Social‑Kachel =======
+    function drawShareCard(score,total){
+      const c = document.getElementById('sharecard'); const ctx = c.getContext('2d'); c.style.display='block';
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+      ctx.strokeStyle='#e5e7eb'; ctx.lineWidth=4; ctx.strokeRect(2,2,c.width-4,c.height-4);
+      ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--spd-red').trim()||'#E3000F';
+      ctx.fillRect(0,0,c.width,140);
+      // Logo links
+      const logo=document.querySelector('img.logo'); if(logo && logo.complete){ const h=80, w=Math.round((logo.naturalWidth||200)*(h/(logo.naturalHeight||200))); ctx.drawImage(logo,40,30,w,h); }
+      // Titel
+      ctx.fillStyle='#fff'; ctx.font='700 44px system-ui,-apple-system,Segoe UI,Roboto,Arial'; ctx.fillText('Jubiläums‑Quiz · SPD Langenselbold', 40, 120);
+      // Score & Tier
+      const pct=Math.round(score/total*100); const tier=pct>=90?'Urgestein':pct>=71?'Roter Kenner':pct>=51?'Ortskundige:r':pct>=31?'Neugieriger Nachbar':'Zugezogener';
+      ctx.fillStyle='#111827'; ctx.font='700 120px system-ui,-apple-system,Segoe UI,Roboto,Arial'; ctx.fillText(`${score} / ${total}`, 60, 310);
+      ctx.fillStyle='#6b7280'; ctx.font='600 38px system-ui,-apple-system,Segoe UI,Roboto,Arial'; ctx.fillText(`${pct}% · ${tier}`, 60, 370);
+      ctx.fillStyle='#374151'; ctx.font='600 36px system-ui,-apple-system,Segoe UI,Roboto,Arial'; ctx.fillText('135 Jahre SPD‑Langenselbold · 1890–2025', 60, 440);
+      ctx.fillStyle='#6b7280'; ctx.font='400 28px system-ui,-apple-system,Segoe UI,Roboto,Arial'; ctx.fillText('spd‑langenselbold.de', 60, 520);
+      return c.toDataURL('image/png');
+    }
+    function downloadCard(){ const url=drawShareCard(state.score, state.order.length); const a=document.createElement('a'); a.href=url; a.download=`spd-ls-quiz-${state.score}-von-${state.order.length}.png`; document.body.appendChild(a); a.click(); a.remove(); }
+
+    function escapeHtml(str){ return String(str).replace(/[&<>"']/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[s])); }
+
+    // ======= Mini‑Konfetti =======
+    const confettiCanvas=document.createElement('canvas'); const cctx=confettiCanvas.getContext('2d');
+    confettiCanvas.style.position='fixed'; confettiCanvas.style.inset='0'; confettiCanvas.style.pointerEvents='none'; confettiCanvas.style.zIndex='9999'; document.body.appendChild(confettiCanvas);
+    let pieces=[]; function confetti(n=30){ if(n===0){pieces.length=0; cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); return;} confettiCanvas.width=innerWidth; confettiCanvas.height=innerHeight; const colors=['#E3000F','#111827','#9CA3AF','#F59E0B','#10B981','#3B82F6']; for(let i=0;i<n;i++){ pieces.push({x:Math.random()*innerWidth,y:-20,r:4+Math.random()*6,s:2+Math.random()*3,a:Math.random()*Math.PI*2,c:colors[i%colors.length]}); } if(!confetti.anim){confetti.anim=true; requestAnimationFrame(loop);} }
+    function loop(){ cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); pieces.forEach(p=>{ p.y+=p.s; p.x+=Math.sin(p.y/20); p.a+=.1; cctx.save(); cctx.translate(p.x,p.y); cctx.rotate(p.a); cctx.fillStyle=p.c; cctx.fillRect(-p.r/2,-p.r/2,p.r,p.r); cctx.restore(); }); pieces=pieces.filter(p=>p.y<innerHeight+20); if(pieces.length){requestAnimationFrame(loop);} else {confetti.anim=false;} }
+
+    // ======= Self‑Tests (entwicklerfreundlich, ohne UI) =======
+    (function selfTests(){
+      try{
+        const errors=[];
+        if(!Array.isArray(QUESTIONS) || QUESTIONS.length!==20) errors.push(`QUESTIONS length ist ${QUESTIONS.length}, erwartet 20`);
+        QUESTIONS.forEach((q,qi)=>{
+          if(!q.text) errors.push(`Fehlender Text in Frage ${qi+1}`);
+          if(!Array.isArray(q.answers) || q.answers.length!==4) errors.push(`Frage ${qi+1}: genau 4 Antworten erwartet`);
+          const numCorrect = q.answers.filter(a=>a.correct===true).length;
+          if(numCorrect!==1) errors.push(`Frage ${qi+1}: genau 1 richtige Antwort erwartet, gefunden ${numCorrect}`);
+          q.answers.forEach((a,ai)=>{ if(typeof a.explain!=='string') errors.push(`Frage ${qi+1}, Antwort ${ai+1}: explain fehlt/kein String`); });
+        });
+        if(errors.length){ console.warn('[Quiz Self‑Tests] Hinweise:', errors); }
+        else { console.info('[Quiz Self‑Tests] OK – 20 Fragen, 4 Antworten, 1 korrekt, Erklärungen vorhanden.'); }
+      }catch(e){ console.error('[Quiz Self‑Tests] Fehler:', e); }
+    })();
+
+    // Start im Intro
+    render();
+  </script>
+</body>
+</html>
