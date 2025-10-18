@@ -1,6 +1,6 @@
 # WordPress Embedding Guide
 
-This guide shows you how to embed the SPD Langenselbold Quiz into your WordPress website using an iframe.
+This guide shows you how to embed the SPD Langenselbold Quiz into your WordPress website using an iframe with automatic height adjustment.
 
 ## Prerequisites
 
@@ -8,7 +8,35 @@ This guide shows you how to embed the SPD Langenselbold Quiz into your WordPress
 2. The quiz should be live at: `https://cbraunfi.github.io/SPD135Quiz/`
 3. Your WordPress site must allow custom HTML/iframe embedding
 
-## Method 1: Basic iframe (Simple)
+## Method 1: Auto-Resizing iframe (Recommended)
+
+This method automatically adjusts the iframe height based on the quiz content. No scrollbars needed!
+
+**Step 1:** Add this code to any WordPress page or post (using the HTML/Code editor):
+
+```html
+<!-- Load iframe-resizer library -->
+<script src="https://cdn.jsdelivr.net/npm/iframe-resizer/js/iframeResizer.min.js"></script>
+
+<!-- Quiz iframe -->
+<iframe
+  id="spd-quiz-frame"
+  src="https://cbraunfi.github.io/SPD135Quiz/"
+  width="100%"
+  style="border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
+  scrolling="no"
+  title="SPD Langenselbold Jubiläums-Quiz">
+</iframe>
+
+<!-- Initialize auto-resize -->
+<script>
+  iFrameResize({ log: false, checkOrigin: false }, '#spd-quiz-frame');
+</script>
+```
+
+**Note:** The quiz already includes the child script (`iframeResizer.contentWindow.min.js`), so you only need to add the parent script shown above.
+
+## Method 2: Basic iframe (Simple, Fixed Height)
 
 Add this code to any WordPress page or post (using the HTML/Code editor):
 
@@ -16,16 +44,14 @@ Add this code to any WordPress page or post (using the HTML/Code editor):
 <iframe
   src="https://cbraunfi.github.io/SPD135Quiz/"
   width="100%"
-  height="800"
+  height="900"
   frameborder="0"
   scrolling="auto"
   title="SPD Langenselbold Jubiläums-Quiz">
 </iframe>
 ```
 
-## Method 2: Responsive iframe (Recommended)
-
-This version automatically adjusts height and looks better on mobile devices:
+## Method 3: Responsive iframe with Fixed Height
 
 ```html
 <div style="position: relative; width: 100%; max-width: 1000px; margin: 0 auto;">
@@ -39,9 +65,7 @@ This version automatically adjusts height and looks better on mobile devices:
 </div>
 ```
 
-## Method 3: Full-width responsive with auto-height
-
-For a more seamless integration that adjusts to content:
+## Method 4: Advanced Styling
 
 ```html
 <style>
