@@ -1,205 +1,110 @@
 # WordPress Embedding Guide
 
-This guide shows you how to embed the SPD Langenselbold Quiz into your WordPress website using an iframe with automatic height adjustment.
+Einfache Anleitung zum Einbetten des SPD Langenselbold Quiz in deine WordPress-Website.
 
-## Prerequisites
+## Voraussetzungen
 
-1. GitHub Pages must be enabled for your repository
-2. The quiz should be live at: `https://cbraunfi.github.io/SPD135Quiz/`
-3. Your WordPress site must allow custom HTML/iframe embedding
+1. GitHub Pages ist aktiviert für dein Repository
+2. Das Quiz ist live unter: `https://cbraunfi.github.io/SPD135Quiz/`
+3. Deine WordPress-Seite erlaubt Custom HTML
 
-## Method 1: Auto-Resizing iframe (Recommended)
+## Empfohlene Lösung: Feste Höhe mit responsive Staffelung
 
-This method automatically adjusts the iframe height based on the quiz content. No scrollbars needed!
+Diese Lösung ist einfach, robust und funktioniert ohne externe Skripte.
 
-**Step 1:** Add this code to any WordPress page or post (using the HTML/Code editor):
-
-```html
-<!-- Load iframe-resizer library -->
-<script src="https://cdn.jsdelivr.net/npm/iframe-resizer/js/iframeResizer.min.js"></script>
-
-<!-- Quiz iframe -->
-<iframe
-  id="spd-quiz-frame"
-  src="https://cbraunfi.github.io/SPD135Quiz/"
-  width="100%"
-  style="border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
-  scrolling="no"
-  title="SPD Langenselbold Jubiläums-Quiz">
-</iframe>
-
-<!-- Initialize auto-resize -->
-<script>
-  iFrameResize({ log: false, checkOrigin: false }, '#spd-quiz-frame');
-</script>
-```
-
-**Note:** The quiz already includes the child script (`iframeResizer.contentWindow.min.js`), so you only need to add the parent script shown above.
-
-## Method 2: Basic iframe (Simple, Fixed Height)
-
-Add this code to any WordPress page or post (using the HTML/Code editor):
-
-```html
-<iframe
-  src="https://cbraunfi.github.io/SPD135Quiz/"
-  width="100%"
-  height="900"
-  frameborder="0"
-  scrolling="auto"
-  title="SPD Langenselbold Jubiläums-Quiz">
-</iframe>
-```
-
-## Method 3: Responsive iframe with Fixed Height
-
-```html
-<div style="position: relative; width: 100%; max-width: 1000px; margin: 0 auto;">
-  <iframe
-    src="https://cbraunfi.github.io/SPD135Quiz/"
-    style="width: 100%; height: 900px; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
-    frameborder="0"
-    scrolling="auto"
-    title="SPD Langenselbold Jubiläums-Quiz">
-  </iframe>
-</div>
-```
-
-## Method 4: Advanced Styling
+### Copy-Paste Code für WordPress:
 
 ```html
 <style>
-  .spd-quiz-container {
-    position: relative;
-    width: 100%;
-    max-width: 1000px;
-    margin: 24px auto;
-    padding: 0 16px;
-  }
-  .spd-quiz-iframe {
-    width: 100%;
-    min-height: 800px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  @media (max-width: 768px) {
-    .spd-quiz-iframe {
-      min-height: 1000px;
-    }
-  }
+  #spd-quiz-iframe { height: 1800px; }
+  @media (max-width: 1024px) { #spd-quiz-iframe { height: 1650px; } }
+  @media (max-width: 640px)  { #spd-quiz-iframe { height: 1500px; } }
 </style>
 
-<div class="spd-quiz-container">
+<div style="max-width:980px;margin:0 auto">
   <iframe
+    id="spd-quiz-iframe"
+    title="SPD Langenselbold Jubiläums-Quiz"
     src="https://cbraunfi.github.io/SPD135Quiz/"
-    class="spd-quiz-iframe"
-    frameborder="0"
-    scrolling="auto"
-    title="SPD Langenselbold Jubiläums-Quiz">
-  </iframe>
+    style="width:100%;border:0;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);"
+    loading="lazy"
+    allow="clipboard-read; clipboard-write; web-share; fullscreen"
+  ></iframe>
 </div>
 ```
 
-## WordPress Instructions
+### Höhen-Staffelung:
+- **Desktop (>1024px)**: 1800px Höhe
+- **Tablet (641-1024px)**: 1650px Höhe
+- **Mobile (≤640px)**: 1500px Höhe
 
-### Using Gutenberg (Block Editor)
+**Tipp:** Falls unten etwas abgeschnitten ist, erhöhe die Höhe auf 1900px (Zeile 2).
 
-1. Edit your page/post
-2. Click the **+** button to add a new block
-3. Search for **"Custom HTML"** or **"HTML"** block
-4. Paste one of the iframe codes above
-5. Click **Preview** to test
-6. Click **Publish** or **Update**
+## So fügst du es in WordPress ein:
 
-### Using Classic Editor
+### Mit Gutenberg (Block Editor):
+1. Öffne deine Seite im Editor
+2. Klicke auf **+** (Block hinzufügen)
+3. Suche nach **"Custom HTML"** oder **"Benutzerdefiniertes HTML"**
+4. Füge den Code oben ein
+5. **Vorschau** anzeigen und testen
+6. **Veröffentlichen**
 
-1. Edit your page/post
-2. Switch to the **Text** tab (not Visual)
-3. Paste one of the iframe codes above
-4. Switch back to **Visual** to preview
-5. Click **Publish** or **Update**
+### Mit Classic Editor:
+1. Öffne deine Seite im Editor
+2. Wechsle zum **Text**-Tab (nicht Visual)
+3. Füge den Code oben ein
+4. Wechsle zurück zu **Visual** für Vorschau
+5. **Veröffentlichen**
 
-### Using a Page Builder (Elementor, Divi, etc.)
+### Mit Page Builder (Elementor, Divi, etc.):
+1. Füge ein **HTML Widget** oder **Code Block** hinzu
+2. Füge den Code oben ein
+3. Speichern und Vorschau
 
-1. Add an **HTML widget** or **Code block**
-2. Paste one of the iframe codes above
-3. Save and preview
+## Alternative: Einfacher iframe ohne responsive Staffelung
 
-## Troubleshooting
+Falls du keine CSS-Anpassungen möchtest:
 
-### iframe not showing
-
-- Check if your WordPress theme/security plugin blocks iframes
-- Try adding this to your theme's functions.php (or use a plugin like "Code Snippets"):
-
-```php
-add_filter('wp_kses_allowed_html', function($tags, $context) {
-    if ($context === 'post') {
-        $tags['iframe'] = array(
-            'src'             => true,
-            'height'          => true,
-            'width'           => true,
-            'frameborder'     => true,
-            'allowfullscreen' => true,
-            'style'           => true,
-            'class'           => true,
-            'title'           => true,
-            'scrolling'       => true,
-        );
-    }
-    return $tags;
-}, 10, 2);
+```html
+<div style="max-width:980px;margin:0 auto">
+  <iframe
+    title="SPD Langenselbold Jubiläums-Quiz"
+    src="https://cbraunfi.github.io/SPD135Quiz/"
+    style="width:100%;height:1800px;border:0;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08);"
+    loading="lazy"
+    allow="clipboard-read; clipboard-write; fullscreen"
+  ></iframe>
+</div>
 ```
 
-### Height issues
+## Fehlerbehebung
 
-- Adjust the `height` or `min-height` values to fit your content
-- Mobile devices might need more height (use media queries as shown in Method 3)
+### iframe wird nicht angezeigt
+- Prüfe, ob dein WordPress-Theme/Security-Plugin iframes blockiert
+- Füge `cbraunfi.github.io` zu deiner Allowlist hinzu
 
-### Security warnings
+### Höhe passt nicht
+- Erhöhe die Höhenwerte in den CSS-Regeln
+- Für Desktop: erhöhe von 1800px auf 1900-2000px
+- Für Mobile: erhöhe von 1500px auf 1600-1700px
 
-- GitHub Pages uses HTTPS, so your WordPress site should also use HTTPS
-- Some security plugins might block external iframes - add `cbraunfi.github.io` to your allowlist
+### HTTPS-Warnung
+- GitHub Pages nutzt HTTPS
+- Stelle sicher, dass auch deine WordPress-Seite HTTPS nutzt
 
-## Advanced: Custom Shortcode
+## Customizing
 
-For easier reuse, create a WordPress shortcode:
+### Andere maximale Breite:
+Ändere `max-width:980px` in Zeile 7 auf deinen gewünschten Wert.
 
-1. Add to your theme's `functions.php` or use "Code Snippets" plugin:
+### Ohne Schatten:
+Entferne `box-shadow:0 8px 24px rgba(0,0,0,.08);` aus dem Style.
 
-```php
-function spd_quiz_shortcode() {
-    return '<div style="position: relative; width: 100%; max-width: 1000px; margin: 0 auto;">
-        <iframe
-            src="https://cbraunfi.github.io/SPD135Quiz/"
-            style="width: 100%; height: 900px; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);"
-            frameborder="0"
-            scrolling="auto"
-            title="SPD Langenselbold Jubiläums-Quiz">
-        </iframe>
-    </div>';
-}
-add_shortcode('spd_quiz', 'spd_quiz_shortcode');
-```
+### Ohne abgerundete Ecken:
+Entferne `border-radius:16px;` aus dem Style.
 
-2. Then use this in any page/post:
+## Support
 
-```
-[spd_quiz]
-```
-
-## Testing
-
-After embedding:
-- Test on desktop and mobile devices
-- Check scrolling behavior
-- Verify the quiz loads correctly
-- Test all quiz functionality (buttons, confetti, share features)
-
-## Notes
-
-- The iframe loads the entire quiz from GitHub Pages
-- Users stay on your WordPress site (the quiz appears embedded)
-- Quiz data and functionality remain independent
-- Share features will generate links to the GitHub Pages URL (you can customize this in the quiz code if needed)
+Bei Fragen oder Problemen öffne ein Issue auf GitHub:
+https://github.com/CBraunFI/SPD135Quiz/issues
